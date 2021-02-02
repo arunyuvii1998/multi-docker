@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t arun98/react-test -f Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true arun98/react-test npm test
+
+after_success:
+  - docker build -t arun98/multi-client ./client
+  - docker build -t arun98/multi-nginx ./nginx
+  - docker build -t arun98/multi-server ./server
+  - docker build -t arun98/multi-worker ./worker
+
+  # Login to Docker CLI via travis CI without a prompt
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those build images and push to docker hub
+  - docker push arun98/multi-client
+  - docker push arun98/multi-nginx
+  - docker push arun98/multi-server
+  - docker push arun98/multi-worker
